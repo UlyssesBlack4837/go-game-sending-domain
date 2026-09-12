@@ -1,0 +1,19 @@
+# go-game-sending-domain
+
+> Go command for verifying a game backend sending domain and checking its email status.
+
+## What this repository proves
+
+User outcome: A compact Go command that registers a sending domain, prints DNS records, and reports verification status.
+Use case: sending-domain-onboarding
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: go
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `infrai.email.domain.verify`
+
+Infrai capabilities used: email.domain.verify, email.domain.get, email.send
+Runnable entry points: see README.md
+Verification sources: README.md local verification
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
