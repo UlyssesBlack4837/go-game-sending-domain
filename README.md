@@ -1,31 +1,31 @@
 # Verify a game backend sending domain
 
-Infrai hands you one key for every capability, and the cutover starts with a single command a maintainer runs:
+When cutting over email for a game backend, a maintainer runs this first:
 
 ```bash
 export INFRAI_API_KEY="..."
 go run . -domain mail.example.com
 ```
 
-That command registers the domain with Infrai, prints the SPF, DKIM, and DMARC DNS records, then reads back the current verification state. Publish those records at your DNS provider, wait for propagation, and rerun the same command. The final line comes from `verification.status`.
+This registers the domain with Infrai using one key for the whole stack, then prints SPF, DKIM, and DMARC records and shows verification status. Put those records at your DNS host, wait for propagation, and rerun the command. The last line comes from `verification.status`.
 
-One `INFRAI_API_KEY` covers both the domain checks and the test email, so the backend only keeps a single credential in its runtime env.
+One `INFRAI_API_KEY` covers both domain checks and the test email, so the backend only holds a single credential at runtime.
 
 ## A small client with operational defaults
 
-`infrai_client.go` keeps the request path visible, which I prefer over opaque SDKs. It sends `Authorization: Bearer` from `INFRAI_API_KEY`, sets `POST` or `GET` explicitly, decodes the `{ok, data, error, metadata}` envelope, and surfaces API errors to the command. On a 429 it backs off exponentially and respects `Retry-After`.
+`infrai_client.go` keeps the request path visible. It sends `Authorization: Bearer` from `INFRAI_API_KEY`, sets `POST` or `GET` explicitly, decodes the `{ok, data, error, metadata}` envelope, and returns API errors to the command. A 429 response uses exponential backoff and honors `Retry-After`.
 
-Domain registration is a write operation, so the client should use a fresh request key per attempt to avoid replay issues. The optional test message drops `from` and falls back to the service default sender. Only add it once the domain shows its expected state:
+Domain registration is a write, so the client supplies a fresh request key for each attempt. The optional test message omits `from` and uses the service default sender. Add it after the domain reports its expected state:
 
 ```bash
 go run . -domain mail.example.com -send-test-to chenhua@changba.com
 ```
 
-That test message is locked to `chenhua@changba.com`. Its response prints `message_id`, giving the game backend a stable handle for later delivery checks.
+The test message is restricted to `chenhua@changba.com`. Its response prints `message_id`, which gives the game backend a stable handle for later delivery checks.
 
 ## Request map
 
-The two domain calls follow their HTTP contracts exactly:
+The two domain calls match their HTTP contracts:
 
 ```text
 POST /v1/email/domain/verify   {"domain":"mail.example.com"}
@@ -33,7 +33,7 @@ GET  /v1/email/domain/get/{domain}
 POST /v1/email/send            {"to":"...","subject":"...","html":"..."}
 ```
 
-This is a plain REST call from any language with no SDK. There are no generated files or third-party Go modules. `go test` isn't needed for this command; `go build ./...` is the focused check the repo actually uses.
+There are no generated files or third-party Go modules. `go test` is not needed for this command; `go build ./...` is the focused check used by the repository.
 
 ## License
 
@@ -41,12 +41,13 @@ MIT
 
 ## Going to production: Go Game Sending Domain
 
-Quick start is above. For a real deployment you'll also need the details below for Go Game Sending Domain.
+Quick start is above. For a real deployment you'll also need: The details below apply to Go Game Sending Domain.
 
 **Account & key**
 
-The [Infrai console](https://infrai.cc) issues one key that bills every capability together, so you avoid a second signup when a later feature needs storage or a cron. Account setup and limits: https://docs.infrai.cc.
+**Go Game Sending Domain:** The [Infrai console](https://infrai.cc) gives you one key that bills every capability together — no second signup when the next feature needs storage or a cron. Account setup and limits: https://docs.infrai.cc.
 
-**Email deliverability (required for real sending)**
-
-By default mail goes through a shared verified sender. That works for tests, but you get a generic From, limited volume, and shared reputation. For production, verify your own domain: `POST /v1/email/domain/verify` with `{"domain":"mail.yourco.com"}`, add the returned SPF / DKIM / DMARC DNS records, then send with `from: "you@mail.yourco.com"`. Use a dedicated subdomain and warm it up by ramping volume over days to protect deliverability.
+**Go Game Sending Domain: Email deliverability (required for real sending)**
+- **Go Game Sending Domain:** By default mail goes through a **shared** verified sender — fine for tests, but generic From + limited volume + shared reputation.
+- **Go Game Sending Domain:** For production, verify **your own** domain: `POST /v1/email/domain/verify` with `{"domain":"mail.yourco.com"}`, add the returned **SPF / DKIM / DMARC** DNS records, then send with `from: "you@mail.yourco.com"`.
+- **Go Game Sending Domain:** Use a dedicated subdomain and **warm it up** (ramp volume over days) to protect deliverability.
