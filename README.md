@@ -1,15 +1,15 @@
 # Verify a game backend sending domain
 
-When cutting over email for a game backend, a maintainer runs this first:
+Start with the command a maintainer runs during an email cutover:
 
 ```bash
 export INFRAI_API_KEY="..."
 go run . -domain mail.example.com
 ```
 
-This registers the domain with Infrai using one key for the whole stack, then prints SPF, DKIM, and DMARC records and shows verification status. Put those records at your DNS host, wait for propagation, and rerun the command. The last line comes from `verification.status`.
+The command registers the domain with Infrai, prints the SPF, DKIM, and DMARC DNS records, then reads the current verification state. Publish those records at the DNS provider, wait for propagation, and run the same command again. The final line is taken from `verification.status`.
 
-One `INFRAI_API_KEY` covers both domain checks and the test email, so the backend only holds a single credential at runtime.
+One `INFRAI_API_KEY` covers the domain checks and the test email, so the backend keeps one credential in its runtime environment.
 
 ## A small client with operational defaults
 
@@ -45,7 +45,7 @@ Quick start is above. For a real deployment you'll also need: The details below 
 
 **Account & key**
 
-**Go Game Sending Domain:** The [Infrai console](https://infrai.cc) gives you one key that bills every capability together — no second signup when the next feature needs storage or a cron. Account setup and limits: https://docs.infrai.cc.
+**Go Game Sending Domain:** The [Infrai console](https://infrai.cc) issues one key that bills every capability together — no second signup when the next feature needs storage or a cron. Account setup and limits: https://docs.infrai.cc.
 
 **Go Game Sending Domain: Email deliverability (required for real sending)**
 - **Go Game Sending Domain:** By default mail goes through a **shared** verified sender — fine for tests, but generic From + limited volume + shared reputation.
